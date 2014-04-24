@@ -1,5 +1,5 @@
 #
-# This is a specialized class that ingest TropForest dataset
+# This is a specialized class that ingest SPOT dataset
 #
 # For Esa/ lite dissemination project
 #
@@ -20,8 +20,8 @@ from esaProducts import dimap_spot_product, eosip_product
 from esaProducts import metadata
 from esaProducts import definitions_EoSip
 import imageUtil
-
-
+from esaProducts import formatUtils
+from datetime import datetime
 
 
 class ingester_spot(ingester.Ingester):
@@ -88,8 +88,22 @@ class ingester_spot(ingester.Ingester):
             self.logger.debug("number of metadata added:%d" % numAdded)
 
             # build typecode, set stop datetime = start datetime
-            met.setMetadataPair(metadata.METADATA_STOP_DATE, met.getMetadataValue(metadata.METADATA_START_DATE))
-            met.setMetadataPair(metadata.METADATA_STOP_TIME, met.getMetadataValue(metadata.METADATA_START_TIME))
+            #met.setMetadataPair(metadata.METADATA_STOP_DATE, met.getMetadataValue(metadata.METADATA_START_DATE))
+            #met.setMetadataPair(metadata.METADATA_STOP_TIME, met.getMetadataValue(metadata.METADATA_START_TIME))
+
+            scene_center_date=met.getMetadataValue(metadata.METADATA_SCENE_CENTER_TIME)
+            scene_center_date_format=datetime.strptime(scene_center_date, '%Y-%m-%dT%H:%M:%S.%f')
+            scene_end=formatUtils.addSecondsSpot(scene_center_date_format,4,512)
+            scene_start=formatUtils.subSecondsSpot(scene_center_date_format,4,512)
+
+            print  " ------------------------------------------------------------------------ data scene center date: %s" % (scene_center_date_format)
+            print  " ------------------------------------------------------------------------ data scene start date: %s" % (scene_start)
+            print  " ------------------------------------------------------------------------ data scene end date: %s" % (scene_end)
+                        
+            met.setMetadataPair(metadata.METADATA_START_DATE, scene_start.strftime('%Y-%m-%d'))
+            met.setMetadataPair(metadata.METADATA_START_TIME, scene_start.strftime('%H:%M:%S'))
+            met.setMetadataPair(metadata.METADATA_STOP_DATE, scene_end.strftime('%Y-%m-%d'))
+            met.setMetadataPair(metadata.METADATA_STOP_TIME, scene_end.strftime('%H:%M:%S'))
             # refine
             processInfo.srcProduct.refineMetadata()
 
